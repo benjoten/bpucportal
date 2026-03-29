@@ -208,6 +208,12 @@ export default function Home() {
   const toggleDueStatus = async (person: PersonData) => {
     if (person.status === 'Paid') return;
     
+    if (!isLoggedIn) {
+      toast({ title: 'Login Required', description: 'Please login to mark due status', variant: 'destructive' });
+      setShowLoginDialog(true);
+      return;
+    }
+    
     const newStatus = person.status === 'Due' ? '' : 'Due';
     
     try {

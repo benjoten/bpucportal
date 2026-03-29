@@ -402,6 +402,45 @@ export async function updatePayment(data: UpdatePaymentData): Promise<boolean> {
   }
 }
 
+// Update status only (for Due checkbox)
+export async function updateStatus(rowIndex: number, status: string): Promise<boolean> {
+  const sheets = getGoogleSheetsClient();
+  
+  try {
+    // First get headers to find column index
+    const headerResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: '1:1',
+    });
+
+    const headers = headerResponse.data.values?.[0] as string[];
+    if (!headers) {
+      throw new Error('Could not find headers');
+    }
+
+    const statusColIndex = findColumnIndex(headers, STATUS_COLUMN_PATTERNS);
+    
+    if (statusColIndex === -1) {
+      throw new Error('Status column not found');
+    }
+
+    const colLetter = columnToLetter(statusColIndex);
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `${colLetter}${rowIndex}`,
+      valueInputOption: 'RAW',
+      requestBody: {
+        values: [[status]],
+      },
+    });
+
+    return true;
+  } catch (error) {
+    console.error('Error updating status:', error);
+    throw error;
+  }
+}
+
 // Add new entry to Google Sheet
 export async function addNewEntry(data: NewEntryData): Promise<{ success: boolean; rowIndex?: number; error?: string }> {
   const sheets = getGoogleSheetsClient();
